@@ -6,6 +6,7 @@ on:
   push:
     paths:
       - 'MiRachaEstudio_Android_30min.zip'
+      - 'index.html'
       - '.github/workflows/build.yml'
 
 jobs:
@@ -19,11 +20,28 @@ jobs:
       - name: Descomprimir proyecto
         run: unzip MiRachaEstudio_Android_30min.zip -d proyecto
 
-      - name: Localizar proyecto Android
+      - name: Aplicar pantalla y versión 1.1
         run: |
-          find proyecto -name gradlew -type f
-          find proyecto -name build.gradle -type f
-          find proyecto -name build.gradle.kts -type f
+          ASSETS_DIR="$(find proyecto -type d -path '*/app/src/assets' | head -n 1)"
+          if [ -z "$ASSETS_DIR" ]; then
+            ASSETS_DIR="$(find proyecto -type d -path '*/app/src/main/assets' | head -n 1)"
+          fi
+          if [ -z "$ASSETS_DIR" ]; then
+            echo "No se encontró la carpeta assets"
+            find proyecto -type d -name assets
+            exit 1
+          fi
+
+          cp index.html "$ASSETS_DIR/index.html"
+
+          GRADLE_FILE="$(find proyecto -path '*/app/build.gradle' -type f | head -n 1)"
+          if [ -z "$GRADLE_FILE" ]; then
+            echo "No se encontró app/build.gradle"
+            exit 1
+          fi
+
+          sed -i -E 's/versionCode[[:space:]]+[0-9]+/versionCode 2/' "$GRADLE_FILE"
+          sed -i -E 's/versionName[[:space:]]+"[^"]+"/versionName "1.1"/' "$GRADLE_FILE"
 
       - name: Preparar Java
         uses: actions/setup-java@v5
