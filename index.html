@@ -1,0 +1,355 @@
+<!doctype html>
+<html lang="es">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<meta name="theme-color" content="#172554">
+<title>Mi Racha de Estudio</title>
+<style>
+:root{color-scheme:dark;--bg:#0b1220;--panel:#111c31;--panel2:#172554;--text:#edf2ff;--muted:#a9b7d0;--blue:#60a5fa;--green:#34d399;--line:#263754;--red:#fb7185}
+*{box-sizing:border-box}
+body{margin:0;background:radial-gradient(ellipse at top,#172554 0,#0b1220 55%);color:var(--text);font-family:system-ui,-apple-system,Segoe UI,Roboto,Arial,sans-serif;min-height:100vh;padding:20px 14px 36px}
+main{max-width:720px;margin:0 auto}
+header{text-align:center;margin:10px 0 22px}
+.logo{font-size:42px;line-height:1.2}
+h1{font-size:clamp(1.65rem,5vw,2.25rem);margin:8px 0 4px}
+.subtitle{color:var(--muted);margin:0}
+.card{background:rgba(17,28,49,.94);border:1px solid var(--line);border-radius:20px;padding:20px;margin:14px 0;box-shadow:0 12px 30px #0002}
+h2{font-size:1.1rem;margin:0 0 14px}
+label{display:block;color:var(--muted);font-size:.94rem;margin-bottom:8px}
+input{width:100%;padding:13px 14px;border-radius:12px;border:1px solid #405475;background:#0b1220;color:var(--text);font:inherit;margin-bottom:12px}
+button{border:0;border-radius:12px;padding:12px 16px;font:inherit;font-weight:700;cursor:pointer;background:var(--blue);color:#071225}
+button:disabled{opacity:.45;cursor:not-allowed}
+button.secondary{background:#263754;color:var(--text);border:1px solid #405475}
+button.danger{background:#4c2433;color:#ffe4e8;border:1px solid #81374b}
+button.full{width:100%}
+.row{display:flex;gap:10px;flex-wrap:wrap}
+.row>*{flex:1}
+.greeting{text-align:center;padding:4px 0 12px}
+.greeting h2{font-size:1.45rem;margin:0 0 6px}
+.greeting p{color:var(--muted);margin:0}
+.timer{text-align:center}
+.time{font-variant-numeric:tabular-nums;font-size:clamp(3rem,14vw,5rem);font-weight:800;letter-spacing:2px;margin:10px 0}
+.target{color:var(--muted);margin-bottom:16px}
+.progress{height:12px;background:#263754;border-radius:99px;overflow:hidden;margin:16px 0 8px}
+.progress span{display:block;height:100%;width:0;background:linear-gradient(90deg,#60a5fa,#34d399);border-radius:99px;transition:width .25s}
+.small{font-size:.88rem;color:var(--muted)}
+.stats{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:10px}
+.stat{background:#0b1220;border:1px solid var(--line);border-radius:14px;padding:14px 8px;text-align:center}
+.stat strong{display:block;font-size:1.55rem;margin-bottom:4px}
+.stat span{font-size:.8rem;color:var(--muted)}
+.calendar{display:grid;grid-template-columns:repeat(7,minmax(0,1fr));gap:6px}
+.dayname{text-align:center;font-size:.75rem;color:var(--muted);padding:4px 0}
+.day{aspect-ratio:1;border-radius:9px;background:#0b1220;border:1px solid var(--line);display:grid;place-items:center;font-size:.82rem;color:var(--muted)}
+.day.done{background:#065f46;border-color:#10b981;color:#ecfdf5;font-weight:800}
+.day.today{outline:2px solid var(--blue);outline-offset:1px}
+.hidden{display:none!important}
+.notice{padding:12px;border-radius:12px;background:#102e2a;color:#bbf7d0;margin:12px 0}
+footer{text-align:center;color:var(--muted);font-size:.8rem;margin-top:22px}
+@media(max-width:420px){.card{padding:16px}.stats{gap:6px}.stat strong{font-size:1.3rem}.stat span{font-size:.72rem}.row button{padding:11px 9px}}
+</style>
+</head>
+<body>
+<main>
+<header>
+  <div class="logo" aria-hidden="true">📖🌅</div>
+  <h1>Mi Racha de Estudio</h1>
+  <p class="subtitle">Un pequeño avance cada día cuenta</p>
+</header>
+
+<section class="card" id="profileCard">
+  <form id="nameForm">
+    <h2>¿Quién va a estudiar?</h2>
+    <label for="studentName">Escribe tu nombre</label>
+    <input id="studentName" name="studentName" maxlength="40" autocomplete="given-name" placeholder="Por ejemplo, Carlos" required>
+    <button class="full" type="submit">Empezar a estudiar</button>
+    <p class="small">Cada persona tiene su propio progreso guardado en este dispositivo.</p>
+  </form>
+  <div id="activeProfile" class="hidden">
+    <div class="greeting">
+      <h2 id="greetingText">¡A estudiar!</h2>
+      <p id="profileSub">Tu progreso se guarda automáticamente.</p>
+    </div>
+    <button class="secondary full" id="switchUser" type="button">Cambiar de usuario</button>
+  </div>
+</section>
+
+<div id="appArea" class="hidden">
+  <section class="card timer">
+    <h2>Tu objetivo diario</h2>
+    <div class="time" id="timerText">00:00</div>
+    <div class="target">Objetivo: 30 minutos al día</div>
+    <div class="progress" aria-label="Progreso diario"><span id="progressBar"></span></div>
+    <p id="progressText" class="small">0 de 30 minutos completados hoy</p>
+    <div class="row" style="margin-top:16px">
+      <button id="startPause" type="button">▶ Empezar</button>
+      <button class="secondary" id="resetTimer" type="button">Reiniciar hoy</button>
+    </div>
+    <div id="completeNotice" class="notice hidden">🎉 ¡Objetivo diario conseguido! ¡Muy bien!</div>
+  </section>
+
+  <section class="card">
+    <h2>Tu progreso</h2>
+    <div class="stats">
+      <div class="stat"><strong id="daysCount">0</strong><span>Días completados</span></div>
+      <div class="stat"><strong id="streakCount">0</strong><span>Racha actual</span></div>
+      <div class="stat"><strong id="totalMinutes">0</strong><span>Minutos estudiados</span></div>
+    </div>
+  </section>
+
+  <section class="card">
+    <h2>Calendario de estudio</h2>
+    <p class="small" id="monthTitle"></p>
+    <div class="calendar" id="calendar"></div>
+    <p class="small" style="margin-bottom:0">Los días verdes son días en los que alcanzaste los 30 minutos.</p>
+  </section>
+</div>
+<footer>Tu progreso se guarda en este dispositivo. No cierres ni borres los datos de la aplicación si quieres conservarlo.</footer>
+</main>
+
+<script>
+(() => {
+  'use strict';
+  const TARGET = 30 * 60;
+  const PROFILES_KEY = 'studyProfilesV11';
+  const ACTIVE_KEY = 'studyActiveProfileV11';
+  const LEGACY_DATA_KEY = 'studyStreakData';
+  const LEGACY_NAME_KEY = 'studyStudentName';
+
+  const $ = id => document.getElementById(id);
+  let profiles = {};
+  let activeId = '';
+  let tickHandle = null;
+
+  const dateKey = (date = new Date()) => {
+    const y = date.getFullYear();
+    const m = String(date.getMonth() + 1).padStart(2, '0');
+    const d = String(date.getDate()).padStart(2, '0');
+    return `${y}-${m}-${d}`;
+  };
+  const parseDate = key => {
+    const [y,m,d] = key.split('-').map(Number);
+    return new Date(y, m - 1, d);
+  };
+  const todayKey = () => dateKey();
+  const safeRead = (key, fallback) => {
+    try { const value = localStorage.getItem(key); return value ? JSON.parse(value) : fallback; }
+    catch (_) { return fallback; }
+  };
+  const save = () => {
+    localStorage.setItem(PROFILES_KEY, JSON.stringify(profiles));
+    if (activeId) localStorage.setItem(ACTIVE_KEY, activeId);
+  };
+  const cleanName = name => String(name || '').trim().replace(/\s+/g, ' ').slice(0, 40);
+  const profileId = name => cleanName(name).toLocaleLowerCase('es');
+  const makeProfile = name => ({name: cleanName(name), days: {}, sessions: {}, runningSince: null, sessionBase: 0});
+
+  function migrateOldData() {
+    const oldProfiles = safeRead(PROFILES_KEY, null);
+    if (oldProfiles && typeof oldProfiles === 'object') {
+      profiles = oldProfiles;
+      activeId = localStorage.getItem(ACTIVE_KEY) || '';
+      return;
+    }
+    profiles = {};
+    const oldName = cleanName(localStorage.getItem(LEGACY_NAME_KEY) || '');
+    const legacy = safeRead(LEGACY_DATA_KEY, {});
+    if (oldName) {
+      const id = profileId(oldName);
+      const p = makeProfile(oldName);
+      const oldDays = legacy && legacy.days && typeof legacy.days === 'object' ? legacy.days : {};
+      const oldSessions = legacy && legacy.sessions && typeof legacy.sessions === 'object' ? legacy.sessions : {};
+      Object.keys(oldDays).forEach(k => { p.days[k] = Number(oldDays[k]) || TARGET; });
+      Object.keys(oldSessions).forEach(k => { p.sessions[k] = Number(oldSessions[k]) || 0; });
+      profiles[id] = p;
+      activeId = id;
+    } else {
+      activeId = '';
+    }
+    save();
+  }
+
+  function currentProfile() { return profiles[activeId] || null; }
+  function currentSeconds(p = currentProfile()) {
+    if (!p) return 0;
+    const key = todayKey();
+    const saved = Math.max(0, Number(p.sessions[key]) || 0);
+    if (p.runningSince) return saved + Math.max(0, Math.floor((Date.now() - Number(p.runningSince)) / 1000));
+    return saved;
+  }
+  function commitRunning(p) {
+    if (!p || !p.runningSince) return;
+    const key = todayKey();
+    const elapsed = Math.max(0, Math.floor((Date.now() - Number(p.runningSince)) / 1000));
+    p.sessions[key] = Math.max(0, Number(p.sessions[key]) || 0) + elapsed;
+    p.runningSince = null;
+    p.sessionBase = 0;
+    save();
+  }
+  function completeIfNeeded(p) {
+    if (!p) return;
+    const key = todayKey();
+    const total = currentSeconds(p);
+    if (total >= TARGET) {
+      p.sessions[key] = Math.max(TARGET, Number(p.sessions[key]) || 0);
+      p.days[key] = Math.max(TARGET, Number(p.days[key]) || 0);
+      if (p.runningSince) {
+        p.runningSince = null;
+        p.sessionBase = 0;
+      }
+      save();
+    }
+  }
+  function fmt(seconds) {
+    const s = Math.max(0, Math.floor(seconds));
+    const mm = String(Math.floor(s / 60)).padStart(2, '0');
+    const ss = String(s % 60).padStart(2, '0');
+    return `${mm}:${ss}`;
+  }
+  function totalStudySeconds(p) {
+    return Object.values(p.sessions || {}).reduce((sum, n) => sum + Math.max(0, Number(n) || 0), 0);
+  }
+  function completedDates(p) {
+    return Object.keys(p.days || {}).filter(k => (Number(p.days[k]) || 0) >= TARGET).sort();
+  }
+  function streakCount(p) {
+    const done = new Set(completedDates(p));
+    let cursor = new Date();
+    if (!done.has(dateKey(cursor))) cursor.setDate(cursor.getDate() - 1);
+    let streak = 0;
+    while (done.has(dateKey(cursor))) {
+      streak++;
+      cursor.setDate(cursor.getDate() - 1);
+    }
+    return streak;
+  }
+  function renderCalendar(p) {
+    const cal = $('calendar');
+    cal.innerHTML = '';
+    const now = new Date();
+    const year = now.getFullYear(), month = now.getMonth();
+    $('monthTitle').textContent = now.toLocaleDateString('es-ES', {month:'long', year:'numeric'});
+    ['L','M','X','J','V','S','D'].forEach(d => {
+      const el = document.createElement('div'); el.className = 'dayname'; el.textContent = d; cal.appendChild(el);
+    });
+    const first = new Date(year, month, 1);
+    const offset = (first.getDay() + 6) % 7;
+    for (let i = 0; i < offset; i++) {
+      const blank = document.createElement('div'); blank.className = 'day'; blank.style.visibility = 'hidden'; cal.appendChild(blank);
+    }
+    const count = new Date(year, month + 1, 0).getDate();
+    for (let d = 1; d <= count; d++) {
+      const date = new Date(year, month, d);
+      const key = dateKey(date);
+      const el = document.createElement('div');
+      el.className = 'day';
+      if ((Number(p.days[key]) || 0) >= TARGET) el.classList.add('done');
+      if (key === todayKey()) el.classList.add('today');
+      el.textContent = d;
+      el.title = (p.days[key] >= TARGET) ? 'Objetivo completado' : 'Objetivo no completado';
+      cal.appendChild(el);
+    }
+  }
+  function render() {
+    const p = currentProfile();
+    const hasProfile = !!p;
+    $('nameForm').classList.toggle('hidden', hasProfile);
+    $('activeProfile').classList.toggle('hidden', !hasProfile);
+    $('appArea').classList.toggle('hidden', !hasProfile);
+    if (!p) return;
+    $('greetingText').textContent = `¡A estudiar, ${p.name}!`;
+    $('profileSub').textContent = 'Tu progreso se guarda automáticamente.';
+    completeIfNeeded(p);
+    const seconds = currentSeconds(p);
+    const done = seconds >= TARGET;
+    $('timerText').textContent = fmt(Math.max(0, TARGET - seconds));
+    $('progressBar').style.width = `${Math.min(100, seconds / TARGET * 100)}%`;
+    $('progressText').textContent = `${Math.min(30, Math.floor(seconds / 60))} de 30 minutos completados hoy`;
+    $('startPause').textContent = p.runningSince ? '⏸ Pausar' : (done ? '✓ Objetivo cumplido' : '▶ Empezar');
+    $('startPause').disabled = done;
+    $('completeNotice').classList.toggle('hidden', !done);
+    $('daysCount').textContent = completedDates(p).length;
+    $('streakCount').textContent = streakCount(p);
+    $('totalMinutes').textContent = Math.floor(totalStudySeconds(p) / 60);
+    renderCalendar(p);
+    save();
+  }
+  function stopTick() {
+    if (tickHandle) clearInterval(tickHandle);
+    tickHandle = null;
+  }
+  function startTick() {
+    stopTick();
+    tickHandle = setInterval(() => {
+      const p = currentProfile();
+      if (!p) return;
+      completeIfNeeded(p);
+      render();
+    }, 1000);
+  }
+  function chooseProfile(name) {
+    const clean = cleanName(name);
+    if (!clean) return;
+    const id = profileId(clean);
+    if (activeId && profiles[activeId]) commitRunning(profiles[activeId]);
+    if (!profiles[id]) profiles[id] = makeProfile(clean);
+    activeId = id;
+    profiles[id].name = clean;
+    save();
+    render();
+    startTick();
+  }
+
+  $('nameForm').addEventListener('submit', event => {
+    event.preventDefault();
+    chooseProfile($('studentName').value);
+    $('studentName').value = '';
+  });
+  $('switchUser').addEventListener('click', () => {
+    const p = currentProfile();
+    if (p) commitRunning(p);
+    stopTick();
+    activeId = '';
+    localStorage.removeItem(ACTIVE_KEY);
+    render();
+    $('studentName').focus();
+  });
+  $('startPause').addEventListener('click', () => {
+    const p = currentProfile();
+    if (!p) return;
+    if (p.runningSince) {
+      commitRunning(p);
+    } else {
+      completeIfNeeded(p);
+      if (currentSeconds(p) < TARGET) p.runningSince = Date.now();
+      save();
+    }
+    render();
+  });
+  $('resetTimer').addEventListener('click', () => {
+    const p = currentProfile();
+    if (!p) return;
+    if (!confirm('¿Quieres poner a cero los minutos de hoy? El historial de días completados se conservará.')) return;
+    p.runningSince = null;
+    p.sessionBase = 0;
+    p.sessions[todayKey()] = 0;
+    save();
+    render();
+  });
+  window.addEventListener('pagehide', () => {
+    const p = currentProfile();
+    if (p) commitRunning(p);
+  });
+
+  migrateOldData();
+  if (activeId && !profiles[activeId]) activeId = '';
+  if (activeId && profiles[activeId] && profiles[activeId].runningSince) {
+    // Al volver a abrir, se guarda el tiempo transcurrido y el cronómetro queda pausado.
+    commitRunning(profiles[activeId]);
+  }
+  render();
+  if (currentProfile()) startTick();
+})();
+</script>
+</body>
+</html>
